@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Migration Error Summary</title>
+  <style>
+    :root {
+      --purple:       #7b1fa2;
+      --purple-light: #9c4dcc;
+      --green:        #5cb85c;
+      --white:        #ffffff;
+      --detail-bg:    #eef6f8;
+      --info-hdr:     #cccccc;
+      --info-row:     #eeeeee;
+      --summary-hdr:  #cccccc;
+      --text:         #333333;
+    }
+    * { box-sizing: border-box; margin:0; padding:0; }
+    body {
+      font-family: Arial, sans-serif;
+      background: var(--white);
+      color: var(--text);
+      padding: 2rem;
+    }
+    .container {
+      max-width: 950px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    /* 1) Upload Bar */
+    form#uploadForm {
+      display: flex; gap:1rem; align-items:center;
+    }
+    form#uploadForm label { font-weight:500; }
+    form#uploadForm input { margin-left:0.5rem; }
+    .btn {
+      border:none; border-radius:4px;
+      padding:0.5rem 1.2rem; font-weight:600;
+      cursor:pointer; transition:background .2s;
+    }
+    .btn:disabled { opacity:.5; cursor:not-allowed; }
+    .btn-run {
+      margin-left:auto;
+      background:var(--purple); color:var(--white);
+    }
+    .btn-run:hover:not(:disabled){ background:var(--purple-light); }
+
+    /* 2) Details Panel */
+    .details-panel {
+      background:var(--detail-bg);
+      padding:1rem 2rem; border-radius:6px;
+      display:grid; grid-template-columns:1fr 1fr;
+      row-gap:.4rem; column-gap:2rem;
+      font-size:.95rem;
+    }
+    .details-panel strong { margin-left:.25rem; }
+
+    /* 3) INFO panels */
+    .info-panels {
+      display:grid; grid-template-columns:1fr 1fr; gap:1rem;
+    }
+    .info-card {
+      background:var(--white); border-radius:6px;
+      box-shadow:0 2px 6px rgba(0,0,0,0.1);
+      overflow:hidden; display:flex; flex-direction:column;
+    }
+    .info-header {
+      background:var(--info-hdr); padding:.75rem;
+      text-align:center; font-weight:600;
+    }
+    .info-table {
+      width:100%; border-collapse:collapse; margin-top:.5rem;
+    }
+    .info-table th,
+    .info-table td {
+      border:1px solid #ccc; padding:.6rem; text-align:center;
+    }
+    .info-table th { background:var(--white); }
+    .info-table tbody tr { background:var(--info-row); }
+    .info-footer {
+      padding:1rem; text-align:center;
+    }
+    .btn-download {
+      background:var(--green); color:var(--white);
+      padding:.4rem 1rem;
+    }
+    .btn-download:hover:not(:disabled){ background:#4cae4c; }
+
+    /* 4) SUMMARY panels */
+    .summary-title {
+      font-size:1.2rem; font-weight:600;
+    }
+    .summary-panels {
+      display:grid; grid-template-columns:1fr 1fr; gap:1rem;
+    }
+    .summary-card {
+      background:var(--white); border-radius:6px;
+      box-shadow:0 2px 6px rgba(0,0,0,0.1);
+      display:flex; flex-direction:column;
+    }
+    .summary-header {
+      background:var(--summary-hdr); padding:.75rem;
+      text-align:center; font-weight:600;
+    }
+    .summary-body {
+      flex:1; overflow-y:auto; max-height:200px; padding:.5rem;
+    }
+    .summary-body table {
+      width:100%; border-collapse:collapse;
+    }
+    .summary-body th,
+    .summary-body td {
+      border:1px solid #999; padding:.5rem; text-align:left;
+      font-size:.9rem;
+    }
+    .summary-body th {
+      background:var(--info-hdr);
+      position:sticky; top:0; z-index:1;
+    }
+    .summary-footer {
+      padding:.75rem 1rem; text-align:right;
+      background:var(--white); border-top:1px solid #ccc;
+    }
+    .summary-panels {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    overflow-x: auto;
+    padding-bottom: 1rem;
+    }
+    .summary-card {
+    flex: 0 0 45%;
+    min-width: 400px;
+    background: var(--white);
+    border-radius: 6px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+   }
+    .summary-body {
+    flex: 1;
+    overflow: auto;
+    max-height: 200px;
+    padding: 0.5rem;
+  }
+    .btn-download-card {
+      background:var(--green); color:var(--white);
+      border:none; border-radius:4px;
+      padding:.5rem 1rem; font-weight:600;
+      cursor:pointer; transition:background .2s;
+    }
+    .btn-download-card:hover:not(:disabled){ background:#4cae4c; }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- 1) Upload -->
+    <form id="uploadForm">
+      <label>Pre-migration File:
+        <input type="file" id="preFile" accept=".xlsx" />
+      </label>
+      <label>Post-migration File:
+        <input type="file" id="postFile" accept=".xlsx" />
+      </label>
+      <button type="submit" id="analyzeBtn" class="btn btn-run">Analyze</button>
+    </form>
+
+    <!-- 2) Details -->
+    <div class="details-panel">
+      <div><strong>Reference No</strong> :</div>
+      <div><strong>Router Name</strong>  :</div>
+      <div><strong>Service Name</strong> :</div>
+      <div><strong>Filename</strong>     :</div>
+    </div>
+
+    <!-- 3) Info Cards -->
+    <div class="info-panels">
+      <div class="info-card">
+        <div class="info-header">PRE-MIGRATION INFORMATION</div>
+        <table class="info-table">
+          <thead><tr><th>Run No</th><th>Result</th><th>Timestamp</th><th>Action</th></tr></thead>
+          <tbody id="preInfoBody">
+            <tr>
+              <td>1</td><td>—</td><td>—</td>
+              <td><button id="downloadInfoPre" class="btn-download" disabled>Download</button></td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="info-footer">
+          <button id="runPre" class="btn btn-run" disabled>Run</button>
+        </div>
+      </div>
+      <div class="info-card">
+        <div class="info-header">POST-MIGRATION INFORMATION</div>
+        <table class="info-table">
+          <thead><tr><th>Run No</th><th>Result</th><th>Timestamp</th><th>Action</th></tr></thead>
+          <tbody id="postInfoBody">
+            <tr>
+              <td>1</td><td>—</td><td>—</td>
+              <td><button id="downloadInfoPost" class="btn-download" disabled>Download</button></td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="info-footer">
+          <button id="runPost" class="btn btn-run" disabled>Run</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4) Summaries -->
+    <div class="summary-title">Error Summarization</div>
+    <div class="summary-panels">
+      <div class="summary-card">
+        <div class="summary-header">Pre-Migration Error Summary</div>
+        <div class="summary-body" id="preTable">
+          <p style="color:#666">No errors yet.</p>
+        </div>
+        <div class="summary-footer">
+          <button id="downloadPreCsv" class="btn-download-card" disabled>Download Excel</button>
+        </div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-header">Post-Migration Error Summary</div>
+        <div class="summary-body" id="postTable">
+          <p style="color:#666">No errors yet.</p>
+        </div>
+        <div class="summary-footer">
+          <button id="downloadPostCsv" class="btn-download-card" disabled>Download Excel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // helper to build HTML table
+    function makeTable(data) {
+      if (!data.length) return '<p style="color:#666">No errors found.</p>';
+      const cols = Object.keys(data[0]);
+      let html = '<table><thead><tr>' +
+                 cols.map(c=>`<th>${c}</th>`).join('') +
+                 '</tr></thead><tbody>';
+      data.forEach(r=>{
+        html += '<tr>' + cols.map(c=>`<td>${r[c]||''}</td>`).join('') + '</tr>';
+      });
+      html += '</tbody></table>';
+      return html;
+    }
+
+    // download Excel helper
+    async function downloadExcel(endpoint, file) {
+      const form = new FormData();
+      form.append(endpoint.includes('pre')?'pre_file':'post_file', file);
+      const res = await fetch(endpoint, { method:'POST', body: form });
+      if (!res.ok) return alert('Download failed');
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href = url;
+      a.download = file.name.replace('.xlsx','_with_summary.xlsx');
+      a.click();
+    }
+
+    // main submit handler
+    document.getElementById('uploadForm')
+      .addEventListener('submit', async e => {
+        e.preventDefault();
+
+        const pre  = document.getElementById('preFile').files[0];
+        const post = document.getElementById('postFile').files[0];
+
+        // require at least one
+        if (!pre && !post) {
+          alert('Please select at least one file (pre- or post-migration).');
+          return;
+        }
+
+        // disable Analyze
+        const btn = document.getElementById('analyzeBtn');
+        btn.disabled = true;
+        btn.textContent = 'Analyzing…';
+
+        // build form data
+        const fg = new FormData();
+        if (pre)  fg.append('pre_file',  pre);
+        if (post) fg.append('post_file', post);
+
+        // call summarize
+        const res = await fetch('/summarize/', { method:'POST', body: fg });
+        btn.disabled = false;
+        btn.textContent = 'Analyze';
+        if (!res.ok) {
+          alert('Error analyzing files');
+          return;
+        }
+        const json = await res.json();
+
+        // render both tables
+        document.getElementById('preTable').innerHTML  = makeTable(json.pre_errors  || []);
+        document.getElementById('postTable').innerHTML = makeTable(json.post_errors || []);
+
+        // enable & wire up only the relevant buttons
+        if (pre) {
+          document.getElementById('downloadInfoPre').disabled  = false;
+          document.getElementById('runPre').disabled            = false;
+          document.getElementById('downloadPreCsv').disabled    = false;
+          document.getElementById('downloadInfoPre').onclick  = () => downloadExcel('/download-pre/',  pre);
+          document.getElementById('downloadPreCsv').onclick    = () => downloadExcel('/download-pre/',  pre);
+        }
+        if (post) {
+          document.getElementById('downloadInfoPost').disabled = false;
+          document.getElementById('runPost').disabled          = false;
+          document.getElementById('downloadPostCsv').disabled  = false;
+          document.getElementById('downloadInfoPost').onclick = () => downloadExcel('/download-post/', post);
+          document.getElementById('downloadPostCsv').onclick  = () => downloadExcel('/download-post/', post);
+        }
+      });
+  </script>
+</body>
+</html>
